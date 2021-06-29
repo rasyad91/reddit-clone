@@ -49,13 +49,9 @@ export class UserResolver {
         const { username, password } = options
         const errors = []
 
-        username.length < 2
-            && username !== ""
-            && errors.push({ field: "username", message: "length must be greater than 2" })
+        username.length < 2 && errors.push({ field: "username", message: "length must be greater than 2" })
 
-        password.length < 8
-            && password !== ""
-            && errors.push({ field: "password", message: "length must be greater than 8" })
+        password.length < 8 && errors.push({ field: "password", message: "length must be greater than 8" })
 
         if (errors.length !== 0) return { errors: errors }
 

@@ -81,12 +81,8 @@ let UserResolver = class UserResolver {
         return __awaiter(this, void 0, void 0, function* () {
             const { username, password } = options;
             const errors = [];
-            username.length < 2
-                && username !== ""
-                && errors.push({ field: "username", message: "length must be greater than 2" });
-            password.length < 8
-                && password !== ""
-                && errors.push({ field: "password", message: "length must be greater than 8" });
+            username.length < 2 && errors.push({ field: "username", message: "length must be greater than 2" });
+            password.length < 8 && errors.push({ field: "password", message: "length must be greater than 8" });
             if (errors.length !== 0)
                 return { errors: errors };
             const hashedPassword = yield argon2_1.default.hash(password);
