@@ -1,0 +1,4 @@
+fragment UserParams on User {
+    id
+    username
+}

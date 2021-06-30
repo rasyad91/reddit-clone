@@ -2,6 +2,8 @@ import { User } from "../entities/User";
 import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver } from "type-graphql";
 import { MyContext } from "../types";
 import argon2 from 'argon2'
+import { EntityManager } from "@mikro-orm/knex";
+import { COOKIE_NAME } from "../constants";
 
 @InputType()
 class UsernamePasswordInput {
@@ -31,13 +33,13 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
-    @Query(() => User, {nullable:true})
+    @Query(() => User, { nullable: true })
     async me(
-        @Ctx() {em, req}: MyContext
-    ){
-        if(!req.session.userID) return null // you are not logged in
+        @Ctx() { em, req }: MyContext
+    ) {
+        if (!req.session.userID) return null // you are not logged in
         console.log("req.sessionID: ", req.session.userID)
-        const user = await em.findOne(User, {id: req.session.userID})
+        const user = await em.findOne(User, { id: req.session.userID })
         return user
     }
 
@@ -50,16 +52,23 @@ export class UserResolver {
         const errors = []
 
         username.length < 2 && errors.push({ field: "username", message: "length must be greater than 2" })
-
         password.length < 8 && errors.push({ field: "password", message: "length must be greater than 8" })
 
         if (errors.length !== 0) return { errors: errors }
 
         const hashedPassword = await argon2.hash(password)
-        const user = em.create(User, { username: username, password: hashedPassword })
-
+        let user;
         try {
-            await em.persistAndFlush(user)
+            const result = await (em as EntityManager)
+                .createQueryBuilder(User)
+                .getKnexQuery()
+                .insert({
+                    username: username,
+                    password: hashedPassword,
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                }).returning("*")
+            user = result[0]
         } catch (err) {
             if (err.detail.includes("already exists")) {
                 return { errors: [{ field: "username", message: "username has already taken" }] }
@@ -69,7 +78,7 @@ export class UserResolver {
         return { user: user }
     }
 
-    @Query(() => UserResponse)
+    @Mutation(() => UserResponse)
     async login(
         @Arg('options') options: UsernamePasswordInput,
         @Ctx() { em, req }: MyContext
@@ -89,11 +98,24 @@ export class UserResolver {
                 message: "invalid password"
             }]
         }
-
         req.session.userID = user.id;
-
         return {
             user
         }
+    }
+
+    @Mutation(() => Boolean)
+    logout(
+        @Ctx() { req, res }: MyContext
+    ) {
+        return new Promise(resolve =>
+            req.session.destroy(err => {
+                res.clearCookie(COOKIE_NAME);
+                if (err) {
+                    console.log(err)
+                    return resolve(false)
+                }
+                return resolve(true)
+            }))
     }
 }
