@@ -1,5 +1,5 @@
 import { MikroORM } from "@mikro-orm/core"
-import { COOKIE_NAME, __prod__ } from "./constants";
+import { SERVERURL, COOKIE_NAME, __prod__ } from "./constants";
 // import {Post} from "./entities/Post"
 import microConfig from './mikro-orm.config'
 import "reflect-metadata";
@@ -14,8 +14,10 @@ import session from 'express-session';
 import connectRedis from 'connect-redis'
 import { MyContext } from "./types";
 import cors from "cors"
+import { sendEmail } from "./util/sendEmail";
 
 const main = async () => {
+    sendEmail("bob@com", "hello there")
     const orm = await MikroORM.init(microConfig);
     const migrator = orm.getMigrator();
     await migrator.up();
@@ -24,7 +26,7 @@ const main = async () => {
 
     const app = express();
     app.use(cors({
-        origin: "http://localhost:3000",
+        origin: SERVERURL,
         credentials: true,
     }))
 

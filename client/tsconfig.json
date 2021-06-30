@@ -30,7 +30,7 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx"
-  ],
+, "../server/src/util/sendEmail.ts"  ],
   "exclude": [
     "node_modules"
   ]
