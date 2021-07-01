@@ -2,12 +2,13 @@ import React from 'react';
 import { Form, Formik } from 'formik';
 import { Wrapper } from '../components/Wrapper';
 import { InputField } from '../components/InputField';
-import { Box, Button } from '@chakra-ui/react';
+import { Box, Button, Flex, Link } from '@chakra-ui/react';
 import { useLoginMutation } from '../generated/graphql';
 import { toErrorMap } from '../utils/toErrorMap';
 import { useRouter } from 'next/router';
 import { withUrqlClient } from 'next-urql';
 import { createUrqlClient } from '../utils/createUrqlClient';
+import NextLink from 'next/link'
 
 const Login: React.FC<{}> = ({ }) => {
     const router = useRouter();
@@ -18,10 +19,11 @@ const Login: React.FC<{}> = ({ }) => {
                 initialValues={{ usernameOrEmail: "", password: "" }}
                 onSubmit={async (values, { setErrors }) => {
                     console.log("values", values)
-                    const response =  await login(values);
+                    const response = await login(values);
                     if (response.data?.login.errors) {
+                        // server returned error
                         setErrors(toErrorMap(response.data.login.errors))
-                    } else if (response.data?.login.user) {
+                    } else {
                         // worked
                         router.push("/");
                     }
@@ -42,14 +44,21 @@ const Login: React.FC<{}> = ({ }) => {
                                 type="password"
                             />
                         </Box>
-                        <Button
-                            type="submit"
-                            mt={4}
-                            colorScheme="teal"
-                            isLoading={isSubmitting}
-                        >
-                            login
-                        </Button>
+                        <Flex mt={3}>
+                            <Button
+                                type="submit"
+                                colorScheme="teal"
+                                isLoading={isSubmitting}
+                            >
+                                login
+                            </Button>
+                            <NextLink href="/forgot-password">
+                                <Link ml="auto" >Forgot Password?</Link>
+                            </NextLink>
+
+                        </Flex>
+
+
                     </Form>
                 )}
             </Formik>
@@ -57,4 +66,4 @@ const Login: React.FC<{}> = ({ }) => {
     )
 };
 
-export default withUrqlClient(createUrqlClient)(Login) 
+export default withUrqlClient(createUrqlClient)(Login)
