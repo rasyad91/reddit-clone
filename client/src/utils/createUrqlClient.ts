@@ -20,12 +20,13 @@ export const createUrqlClient = (ssrExchange: any) => ({
               { query: MeDocument },
               _result,
               (result, query) => {
+                console.log(args,info)
                 if (result.login.errors) { return query }
                 else { return { me: result.login.user }; }
               }
             )
           },
-          register: (_result, args, cache, info) => {
+          register: (_result, _args, cache, _info) => {
             betterUpdateQuery<RegisterMutation, MeQuery>(
               cache,
               { query: MeDocument },
@@ -36,7 +37,7 @@ export const createUrqlClient = (ssrExchange: any) => ({
               }
             )
           },
-          logout: (_result, args, cache, info) => {
+          logout: (_result, _args, cache, _info) => {
             betterUpdateQuery<LogoutMutation, MeQuery>(
               cache,
               { query: MeDocument },
@@ -45,6 +46,9 @@ export const createUrqlClient = (ssrExchange: any) => ({
             )
           },
         },
+        Query: {
+
+        }
         
       }
     }),
