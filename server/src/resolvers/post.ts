@@ -1,45 +1,38 @@
+import { Arg, Mutation, Query, Resolver } from "type-graphql";
 import { Post } from "../entities/Post";
-import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
-import { MyContext } from "../types";
 
 @Resolver()
 export class PostResolver {
     @Query(() => [Post])
     // posts(@Ctx() ctx: MyContext )
-    async posts(@Ctx() { em }: MyContext): Promise<Post[]> {
+    async posts(): Promise<Post[]> {
         // await sleep(3000);
-        return em.find(Post, {});
+        return Post.find();
     }
 
     @Query(() => Post, { nullable: true })
     post(
         @Arg("id") id: number,
-        @Ctx() { em }: MyContext
-    ): Promise<Post | null> {
-        return em.findOne(Post, { id });
+    ): Promise<Post | undefined> {
+        return Post.findOne(id);
     }
 
     @Mutation(() => Post)
     async createPost(
         @Arg("title") title: string,
-        @Ctx() { em }: MyContext
     ): Promise<Post> {
-        const post = em.create(Post, { title: title });
-        await em.persistAndFlush(post);
-        return post;
+        return Post.create({title}).save();
     }
 
     @Mutation(() => Post, {nullable: true})
     async updatePost(
         @Arg("id") id: number,
         @Arg("title", () => String, { nullable: true }) title: string, // setting title as optional
-        @Ctx() { em }: MyContext
-    ): Promise<Post | null> {
-        const post = await em.findOne(Post, {id})
-        if (!post) return null 
+    ): Promise<Post | undefined> {
+        const post = Post.findOne(id)
+        if (!post) return undefined 
         if (typeof title !== 'undefined') {
-            post.title = title
-            await em.persistAndFlush(post)
+            await Post.update({id}, {title}); 
         }
         return post
     }
@@ -47,11 +40,9 @@ export class PostResolver {
     @Mutation(() => Boolean)
     async deletePost(
         @Arg("id") id: number,
-        @Ctx() { em }: MyContext
     ): Promise<Boolean> {
-        const post = await em.findOne(Post, {id})
-        if (!post) return false
-        await em.removeAndFlush(post)
+        if (!Post.findOne(id)) return false 
+        await Post.delete({id})
         return true 
     }
 }

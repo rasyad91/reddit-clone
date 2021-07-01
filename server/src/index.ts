@@ -1,26 +1,33 @@
-import { MikroORM } from "@mikro-orm/core"
-import { SERVERURL, COOKIE_NAME, __prod__ } from "./constants";
-// import {Post} from "./entities/Post"
-import microConfig from './mikro-orm.config'
-import "reflect-metadata";
-import express from 'express'
 import { ApolloServer } from "apollo-server-express";
+import connectRedis from 'connect-redis';
+import cors from "cors";
+import express from 'express';
+import session from 'express-session';
+import Redis from 'ioredis';
+import "reflect-metadata";
 import { buildSchema } from "type-graphql";
+import { createConnection } from "typeorm";
+import { COOKIE_NAME, SERVERURL, __prod__ } from "./constants";
+import { Post } from "./entities/Post";
+import { User } from "./entities/User";
 import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
-import Redis from 'ioredis';
-import session from 'express-session';
-import connectRedis from 'connect-redis'
 import { MyContext } from "./types";
-import cors from "cors"
 // import { sendEmail } from "./util/sendEmail";
 
 const main = async () => {
     // sendEmail("bob@com", "hello there")
-    const orm = await MikroORM.init(microConfig);
-    const migrator = orm.getMigrator();
-    await migrator.up();
+    const conn = await createConnection({
+        type: "postgres",
+        database: 'lireddit',
+        username: 'rasyad',
+        password: '',
+        logging: true,
+        synchronize: true,
+        entities: [User, Post]
+    })
+    
     // const post = (await orm).em.create(Post, {title: "my first post"});
     // (await orm).em.persistAndFlush(post);
 
@@ -59,7 +66,7 @@ const main = async () => {
             resolvers: [HelloResolver, PostResolver, UserResolver],
             validate: false
         }),
-        context: ({ req, res }): MyContext => ({ em: orm.em, req, res, redis })
+        context: ({ req, res }): MyContext => ({ req, res, redis })
     });
 
     apolloServer.applyMiddleware({ app, cors: false });
